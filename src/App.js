@@ -1,17 +1,22 @@
 import React, {Component} from 'react';
 import ReactDOM from 'react-dom';
 import {Header} from './containers';
-import { Route } from 'react-router-dom';
-import { Home, Project} from './pages';
+import { Route, Switch} from 'react-router-dom';
+import * as pages  from './pages';
+import {Register} from './pages';
 
 
 class App extends Component{
-  render(){
+  render(props){
     return(
       <div>
         <Header />
-        <Route exact path="/" component={Home} />
-        <Route path="/project" component={Project} />
+        <Switch>
+          <Route exact path="/" component={pages.Home} />
+          <Route exact path="/project" component={pages.Project} />
+          <Route exact path="/register" render={(props) => (<Register {...props}/>)} />
+          <Route component={pages.Error} />
+        </Switch>
       </div>
     );
   }

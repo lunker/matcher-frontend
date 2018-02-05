@@ -6,9 +6,9 @@ import App from './src/App';
 
 
 const Root = () => (
-    <BrowserRouter>
-        <App />
-    </BrowserRouter>
+  <BrowserRouter>
+      <App />
+  </BrowserRouter>
 );
 
 
