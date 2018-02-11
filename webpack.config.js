@@ -32,16 +32,16 @@ module.exports = {
             test: /\.(js|jsx)$/,
             loader: 'babel-loader',
             exclude: /node_modules/,
-            // include: path.join (__dirname, './src'),
             query: {
                 cacheDirectory: true,
-                presets: ['es2015', 'react']
+                presets: ['es2015', 'react'],
+                plugins: ['transform-class-properties']
             }
           },
+
           {
-            test: /\.css/,
-            include: /node_modules/,
-            loader: 'css-loader'
+            test: /\.css$/,
+            loader: ['style-loader', 'css-loader']
           },
           {
             test: /\.(png|woff|woff2|eot|ttf|svg)$/,

@@ -1,4 +1,3 @@
-'use strict';
 import React, {Component} from 'react';
 import { Button, Confirm, Modal, Input, Dropdown, Grid} from 'semantic-ui-react'
 import axios from 'axios';
@@ -8,7 +7,7 @@ import { Route } from 'react-router-dom';
 import Moment from 'moment';
 import 'react-dates/initialize';
 import 'react-dates/lib/css/_datepicker.css';
-import { DateRangePicker, SingleDatePicker, DayPickerRangeController, SingleDatePickerPhrases } from 'react-dates';
+import { SingleDatePicker, SingleDatePickerPhrases } from 'react-dates';
 
 import PropTypes from 'prop-types';
 import momentPropTypes from 'react-moment-proptypes';
@@ -19,31 +18,17 @@ class Register extends Component {
   constructor(props){
     super(props);
 
-    const list=[
-      {
-        key: 1,
-        value:'1',
-        text: '1'
-      },
-      {
-        key:2 ,
-        value: '2',
-        text: '2'
-      },
-      {
-        key: 3,
-        value: '3',
-        text: '3'
-      }
-    ];
-
     this.state={
       visible: false,
-      list: list,
+      readOnly: true,
+      options:{
+        exercise:[]
+      },
+      list: [],
       inputs: {
         area: -1,
         date: -1,
-        type: -1
+        exercise: -1
       },
       date : new Moment(),
       focused: false
@@ -63,19 +48,19 @@ class Register extends Component {
     var requestBody={
       date: this.state.inputs.date,
       area: this.state.inputs.area,
-      type: this.state.inputs.area
+      exercise: this.state.inputs.exercise
     };
 
-
     console.log(requestBody);
-
-    axios.post('http://localhost:8080/api/match', {
+    axios({
+      method:'post',
+      url: 'http://localhost:8080/api/match',
       headers: {
         'Access-Control-Allow-Origin': '*'
       },
-
       data: requestBody
-    }).then((response) => {
+    })
+    .then((response) => {
       console.log(response);
       if(response.status== 200){
         alert('등록완료');
@@ -90,11 +75,30 @@ class Register extends Component {
     this.setState({inputs: {area: data.value}});
   }
 
-  onTypeChange (event, data) {
+  onExerciseChange (event, data) {
+    this.setState({inputs: {exercise: data.value}});
   }
 
-  onDateChange (event, data) {
-    console.log(data.value);
+  onDateChange (date) {
+    console.log(date);
+    this.setState({date: date});
+  }
+
+  // React Lifecycle
+  componentDidMount() {
+    axios({
+      method:'GET',
+      url: 'http://localhost:8080/api/match/options'
+    })
+    .then((response)=>{
+      console.log(response);
+      console.log(response.data.exercise);
+
+      this.setState({options: {exercise: response.data.exercise}});
+    })
+    .catch((error)=>{
+      console.log(error);
+    });
   }
 
   render(props){
@@ -106,8 +110,8 @@ class Register extends Component {
             style={{ height: '100%' }}
             verticalAlign='middle'>
 
-            <Grid.Row>
-              <Grid.Column width={1}>
+            <Grid.Row columns={6}>
+              <Grid.Column width={2}>
                 지역
               </Grid.Column>
               <Grid.Column width={4}>
@@ -116,35 +120,36 @@ class Register extends Component {
             </Grid.Row>
 
             <Grid.Row>
-              <Grid.Column width={1}>
+              <Grid.Column width={2}>
                 경기날짜
               </Grid.Column>
               <Grid.Column width={4}>
-                <Dropdown options={this.state.list} fluid selection placeholder='Select Date' onChange={this.onDateChange.bind(this)}/>
+                <SingleDatePicker
+                  date={this.state.date}
+                  onDateChange={this.onDateChange.bind(this)}
+                  focused={this.state.focused}
+                  onFocusChange={({ focused }) => this.setState({ focused })}
+                  showClearDate
+                  small
+                  displayFormat='YYYY-MM-DD'
+                  readOnly={this.state.readOnly}
+                  />
               </Grid.Column>
             </Grid.Row>
 
-            <Grid.Row>
-              <Grid.Column width={1}>
-                Type
+            <Grid.Row >
+              <Grid.Column width={2}>
+                exercise
               </Grid.Column>
               <Grid.Column width={4}>
-                <Dropdown options={this.state.list} fluid selection placeholder='Select Type' onChange={this.onTypeChange.bind(this)}/>
+                <Dropdown options={this.state.options.exercise} fluid selection placeholder='Select Type' onChange={this.onExerciseChange.bind(this)}/>
               </Grid.Column>
             </Grid.Row>
 
           </Grid>
           <hr />
 
-
           <Button onClick={this.registerMatchRequest.bind(this)}>매치 요청</Button>
-          <SingleDatePicker
-            date={this.state.date} // momentPropTypes.momentObj or null
-            onDateChange={date => this.setState({ date })} // PropTypes.func.isRequired
-            focused={this.state.focused} // PropTypes.bool
-            onFocusChange={({ focused }) => this.setState({ focused })} // PropTypes.func.isRequired
-
-          />
       </div>
     )
   }

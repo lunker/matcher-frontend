@@ -1,2 +1,5 @@
 # dependency 
 node_modules/
+
+# rest api key 
+.api_key.json
