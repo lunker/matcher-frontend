@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import DesktopContainer from './DesktopContainer';
 import MobileContainer from './MobileContainer';
+// const MobileDetect = require('mobile-detect');
+// const md = new MobileDetect(req.headers['user-agent']);
 
 
 class MatcherContainer extends Component{
@@ -10,11 +12,10 @@ class MatcherContainer extends Component{
 
   render() {
     const { children } = this.props
-    
+
     return(
       <div>
-        <DesktopContainer>{children}</DesktopContainer>
-        <MobileContainer>{children}</MobileContainer>
+        <DesktopContainer {...this.props}>{children}</DesktopContainer>
       </div>
     );
   }

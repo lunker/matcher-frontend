@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
-import {Link} from 'react-router-dom'
-import { Button, List } from 'semantic-ui-react'
+import {Link, withRouter} from 'react-router-dom'
+import { Button, List, Container, Menu } from 'semantic-ui-react'
 import axios from 'axios';
 import history from '../pages/History';
 import Config from '../Config';
@@ -13,7 +13,14 @@ class Header extends Component{
     if(sessionStorage.getItem('matcher_login') == null){
       sessionStorage.setItem('matcher_login', 'false');
     }
-    this.state={isLoggedIn: sessionStorage.getItem('matcher_login')};
+
+    console.log('header location::');
+    console.log(this.props.location);
+
+    this.state={
+      isLoggedIn: sessionStorage.getItem('matcher_login'),
+      activeIndex:0
+    };
   }
 
   customLogin() {
@@ -101,6 +108,18 @@ class Header extends Component{
 
 
   // -- React Lifecycle
+
+  componentDidUpdate(prevProps) {
+
+    if (this.props.location !== prevProps.location) {
+      this.onRouteChanged();
+    }
+  }
+
+  onRouteChanged() {
+    console.log("HEADER ROUTE CHANGED");
+  }
+
   componentDidMount() {
     console.log('componentDidMount');
     console.log('is loggedin : ' + sessionStorage.getItem('matcher_login'));
@@ -116,7 +135,6 @@ class Header extends Component{
   }// end method
 
   shouldComponentUpdate(nextProps, nextState){
-    console.log('ASDFASFSAA');
     console.log(this.state.isLoggedIn);
     console.log(nextState.isLoggedIn);
     return (this.state.isLoggedIn != nextState.isLoggedIn);
@@ -142,48 +160,34 @@ class Header extends Component{
       user = <a id="kakao-login-btn"></a>
     }
 
+    const fixed=this.props.fixed;
     return (
       <div>
-        <List horizontal>
-          <List.Item>
-            <List.Content>
-              <Link to="/">Home</Link>
-            </List.Content>
-          </List.Item>
+        <Menu
+          fixed={fixed ? 'top' : null}
+          inverted={!fixed}
+          pointing={!fixed}
+          secondary={!fixed}
+          size='large'
+          activeIndex={this.state.activeIndex}
+        >
+          <Container>
+            <Menu.Item as={Link} active={this.state.activeIndex==0} to="/">Home</Menu.Item>
+            <Menu.Item as={Link} active={this.state.activeIndex==1} to="/register">Register</Menu.Item>
+            <Menu.Item as='a' onClick={this.customLogin.bind(this)}>custom login</Menu.Item>
+            {
+              this.state.isLoggedIn == 'true'? (
+                <Menu.Item as='a' onClick={this.logout.bind(this)}>Logout!</Menu.Item>
+              ) : (
+                <a id="kakao-login-btn"></a>
+              )
+            }
+          </Container>
 
-          <List.Item>
-            <List.Content>
-              <Link to="/register">Register</Link>
-            </List.Content>
-          </List.Item>
-
-          <List.Item>
-            <List.Content>
-              <a onClick={this.customLogin.bind(this)}>custom login</a>;
-            </List.Content>
-          </List.Item>
-
-          {
-            this.state.isLoggedIn == 'true'? (
-              <List.Item>
-                <List.Content>
-                  <a onClick={this.logout.bind(this)}>Logout!</a>;
-                </List.Content>
-              </List.Item>
-            ) : (
-              <List.Item>
-                <List.Content>
-                  <a id="kakao-login-btn"></a>
-                </List.Content>
-              </List.Item>
-            )
-          }
-
-        </List>
-        <hr/>
+        </Menu>
       </div>
     );
   }
 }
 
-export default Header;
+export default withRouter(Header);

@@ -12,9 +12,11 @@ module.exports = {
         path: __dirname + '/public/',
         filename : 'bundle.js'
     }, // entry에 지정된 파일들을 bundling한 결과물 처리
+
     resolve: {
       extensions: ['.js', '.jsx']
     },
+
     devServer: {
         historyApiFallback: true,
         inline: true,

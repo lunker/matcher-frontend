@@ -12,6 +12,8 @@ import { SingleDatePicker, SingleDatePickerPhrases } from 'react-dates';
 import PropTypes from 'prop-types';
 import momentPropTypes from 'react-moment-proptypes';
 import omit from 'lodash/omit';
+import update from 'immutability-helper';
+import DatePicker from '../components/DatePicker';
 
 
 class Register extends Component {
@@ -19,82 +21,153 @@ class Register extends Component {
     super(props);
 
     this.state={
-      visible: false,
-      readOnly: true,
-      options:{
-        exercise:[]
+      fromVisible: false,
+      toVisible: false,
+      fromReadOnly: true,
+      toReadOnly: true,
+
+      options: {
+        exercise: [],
+        city: [],
+        gu: [],
+        selectedGu: []
       },
-      list: [],
-      inputs: {
-        area: -1,
-        date: -1,
-        exercise: -1
+
+      selectedInputs: {
+        city: '',
+        gu: '',
+        areaCandidates: [],
+        fromMatchingDate: new Moment(),
+        toMatchingDate: new Moment(),
+        exerciseId: -1
       },
-      date : new Moment(),
-      focused: false
+      fromFocused: false,
+      toFocused: false,
+      times: [
+
+      ]
     };
   }
 
   registerMatchRequest () {
     var self=this;
 
-    if(this.state.inputs.area == -1){
-      alert("올바른 정보를 입력하세요");
-      return ;
-    }
-
-    console.log(this.state.inputs.area);
-
-    var requestBody={
-      date: this.state.inputs.date,
-      area: this.state.inputs.area,
-      exercise: this.state.inputs.exercise
+    console.log(this.state.selectedInputs);
+    var params={
+      city: this.state.selectedInputs.city,
+      gu: this.state.selectedInputs.gu
     };
 
-    console.log(requestBody);
     axios({
       method:'post',
       url: 'http://localhost:8080/api/match',
       headers: {
         'Access-Control-Allow-Origin': '*'
       },
-      data: requestBody
+      data: this.state.selectedInputs
     })
     .then((response) => {
       console.log(response);
       if(response.status== 200){
         alert('등록완료');
-        self.props.history.push('/');
+        self.props.history.push('/'); // redirect to Main page
       }
-
-    });
+    });// end axios
   }// end method
 
-  onAreaChange (event, data) {
-    // this.state.inputs.area=data.value;
-    this.setState({inputs: {area: data.value}});
+  onCityChange (event, data) {
+    var cityId=0;
+
+    for(var idx in data.options){
+      if(data.options[idx].text === data.value){
+        cityId=data.options[idx].id;
+        break;
+      }
+    }
+
+    let newState=update(this.state, {
+      selectedInputs: {$merge: {cityId: cityId}}, options: {$merge: {selectedGu: this.state.options.gu[data.value]}}
+    }
+    );
+    this.setState(newState);
+  }
+
+  onGuChange (event, data) {
+    console.log(data.value);
+
+    var candidate={
+      cityId:this.state.selectedInputs.cityId,
+      guId:0
+    };
+
+    var guId=0;
+
+    for(var idx in data.options){
+      if(data.options[idx].text === data.value){
+        guId=data.options[idx].id;
+        break;
+      }
+    }
+
+    candidate.guId=guId;
+    let newState=update(this.state, {
+      selectedInputs: {$merge: {gu: data.value}},
+      selectedInputs: {areaCandidates: {$push: [candidate]}}
+    });
+
+    this.setState(newState);
   }
 
   onExerciseChange (event, data) {
-    this.setState({inputs: {exercise: data.value}});
+    console.log(data);
+    console.log(data.options);
+    var exerciseId=0;
+
+    for(var idx in data.options){
+      if(data.options[idx].text === data.value){
+        exerciseId=data.options[idx].id;
+        break;
+      }
+    }
+    console.log('Selected exercise id :: ' + exerciseId);
+
+    let newState=update(this.state, {
+      selectedInputs: {$merge: {exerciseId: exerciseId}}
+    });
+    this.setState(newState);
   }
 
-  onDateChange (date) {
-    console.log(date);
-    this.setState({date: date});
+  onFromDateChange (date) {
+    let newState=update(this.state, {
+      selectedInputs: {$merge: {fromMatchingDate: date}}}
+    );
+
+    this.setState(newState);
+  }
+
+  onToDateChange (date) {
+    let newState=update(this.state, {
+      selectedInputs: {$merge: {toMatchingDate: date}}}
+    );
+
+    this.setState(newState);
   }
 
   // React Lifecycle
   componentDidMount() {
     axios({
       method:'GET',
-      url: 'http://localhost:8080/api/match/options'
+      url: 'http://localhost:8080/api/match/options',
+      headrs: {
+        'Content-Type': 'application/json'
+      }
     })
     .then((response)=>{
       console.log(response);
-      console.log(response.data.exercise);
+      let newState=update(this.state, {options: {$merge: response.data}});
 
-      this.setState({options: {exercise: response.data.exercise}});
+      this.setState(newState);
+      console.log(this.state);
     })
     .catch((error)=>{
       console.log(error);
@@ -115,7 +188,8 @@ class Register extends Component {
                 지역
               </Grid.Column>
               <Grid.Column width={4}>
-                <Dropdown options={this.state.list} fluid selection placeholder='Select Area' onChange={this.onAreaChange.bind(this)}/>
+                <Dropdown options={this.state.options.city} scrolling={true}  selection placeholder='시' onChange={this.onCityChange.bind(this)}/>
+                <Dropdown options={this.state.options.times} selection placeholder='Hours' onChange={this.onGuChange.bind(this)}/>
               </Grid.Column>
             </Grid.Row>
 
@@ -123,17 +197,44 @@ class Register extends Component {
               <Grid.Column width={2}>
                 경기날짜
               </Grid.Column>
-              <Grid.Column width={4}>
+              <Grid.Column width={2}>
+
                 <SingleDatePicker
-                  date={this.state.date}
-                  onDateChange={this.onDateChange.bind(this)}
-                  focused={this.state.focused}
-                  onFocusChange={({ focused }) => this.setState({ focused })}
+                  date={this.state.selectedInputs.fromMatchingDate}
+                  onDateChange={this.onFromDateChange.bind(this)}
+                  focused={this.state.fromFocused}
+                  onFocusChange={({ focused }) => {
+
+                    const isFocused={focused};
+                      this.setState({
+                        fromFocused: isFocused.focused
+                      });
+                    }
+                  }
                   showClearDate
                   small
                   displayFormat='YYYY-MM-DD'
-                  readOnly={this.state.readOnly}
-                  />
+                  readOnly={this.state.fromReadOnly}
+                />
+              </Grid.Column>
+
+              <Grid.Column width={2}>
+                <SingleDatePicker
+                  date={this.state.selectedInputs.toMatchingDate}
+                  onDateChange={this.onToDateChange.bind(this)}
+                  focused={this.state.toFocused}
+                  onFocusChange={({ focused }) => {
+                    const isFocused={focused};
+                      this.setState({
+                        toFocused: isFocused.focused
+                      });
+                    }
+                  }
+                  showClearDate
+                  small
+                  displayFormat='YYYY-MM-DD'
+                  readOnly={this.state.toReadOnly}
+                />
               </Grid.Column>
             </Grid.Row>
 
@@ -150,6 +251,7 @@ class Register extends Component {
           <hr />
 
           <Button onClick={this.registerMatchRequest.bind(this)}>매치 요청</Button>
+          <DatePicker onTimeChange={this.onTimeChange.bind(this)}/>
       </div>
     )
   }

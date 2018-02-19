@@ -5,6 +5,10 @@ import axios from 'axios';
 
 class Home extends Component {
 
+  constructor(props){
+    super(props);
+  }
+
   requestPushToken () {
     let token='';
     token = sessionStorage.getItem('matcher_token');
@@ -28,38 +32,34 @@ class Home extends Component {
   render(){
     return (
         <div>
-            <h2>
-                home
-            </h2>
+          <Grid
+            textAlign='center'
+            style={{ height: '100%' }}
+            verticalAlign='middle'
+          >
+            <Grid.Column style={{maxWidth: 450}}>
+              <Form size='large'>
+                <Segment stacked>
+                  <Form.Input
+                    fluid
+                    icon='user'
+                    iconPosition='left'
+                    placeholder='E-mail address'
+                  />
+                  <Form.Input
+                    fluid
+                    icon='lock'
+                    iconPosition='left'
+                    placeholder='Password'
+                    type='password'
+                  />
+                  <Button color='teal' fluid size='large'>Login</Button>
+                </Segment>
+              </Form>
+            </Grid.Column>
+          </Grid>
 
-            <Grid
-              textAlign='center'
-              style={{ height: '100%' }}
-              verticalAlign='middle'
-            >
-              <Grid.Column style={{maxWidth: 450}}>
-                <Form size='large'>
-                  <Segment stacked>
-                    <Form.Input
-                      fluid
-                      icon='user'
-                      iconPosition='left'
-                      placeholder='E-mail address'
-                    />
-                    <Form.Input
-                      fluid
-                      icon='lock'
-                      iconPosition='left'
-                      placeholder='Password'
-                      type='password'
-                    />
-                    <Button color='teal' fluid size='large'>Login</Button>
-                  </Segment>
-                </Form>
-              </Grid.Column>
-            </Grid>
-
-            <Button onClick={this.requestPushToken.bind(this)}>request push token</Button>
+          <Button onClick={this.requestPushToken.bind(this)}>request push token</Button>
         </div>
     );// end return
   }

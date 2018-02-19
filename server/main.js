@@ -25,9 +25,9 @@ app.get('/hello', (req, res) => {
     return res.send('Can you hear me?');
 });
 
-// 라우트 예제입니다.
-import posts from './routes/posts';
-app.use('/posts', posts);
+app.get('/', (req, res) => {
+  
+});
 
 // production
 const server = app.listen(productPort, () => {
