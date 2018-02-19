@@ -1,19 +1,21 @@
 import React, {Component} from 'react';
-import { Button, Confirm, Modal, Input, Dropdown, Grid} from 'semantic-ui-react'
+import { Button, Confirm, Modal, Input, Dropdown, Grid, List} from 'semantic-ui-react'
 import axios from 'axios';
 import { Route } from 'react-router-dom';
+import _ from 'lodash';
 
 // -- react-dates
 import Moment from 'moment';
 import 'react-dates/initialize';
 import 'react-dates/lib/css/_datepicker.css';
-import { SingleDatePicker, SingleDatePickerPhrases } from 'react-dates';
+import { SingleDatePicker } from 'react-dates';
 
 import PropTypes from 'prop-types';
 import momentPropTypes from 'react-moment-proptypes';
 import omit from 'lodash/omit';
 import update from 'immutability-helper';
 import DatePicker from '../components/DatePicker';
+import DateLabel from '../components/DateLabel';
 
 
 class Register extends Component {
@@ -39,13 +41,12 @@ class Register extends Component {
         areaCandidates: [],
         fromMatchingDate: new Moment(),
         toMatchingDate: new Moment(),
+        fromMatchingDateCandidates: [],
+        toMatchingDateCandidates: [],
         exerciseId: -1
       },
       fromFocused: false,
       toFocused: false,
-      times: [
-
-      ]
     };
   }
 
@@ -129,6 +130,7 @@ class Register extends Component {
         break;
       }
     }
+
     console.log('Selected exercise id :: ' + exerciseId);
 
     let newState=update(this.state, {
@@ -138,9 +140,65 @@ class Register extends Component {
   }
 
   onFromDateChange (date) {
-    let newState=update(this.state, {
-      selectedInputs: {$merge: {fromMatchingDate: date}}}
+
+    /*
+    let label=()=>{
+      return <DateLabel value={date.toString()} onDeleteClick={()=>{
+        let newState={};
+      }} /> ;
+    }
+    */
+
+    let label=() => {
+      return(
+        <DateLabel value={date.format('YYYY-MM-DD HH:mm').toString()} index={this.state.selectedInputs.fromMatchingDateCandidates.length} onDeleteClick={this.deleteLabel.bind(this)}
+        />
+      );
+    };
+
+    let newState=update(this.state,
+      {
+        selectedInputs: {
+          $merge: {fromMatchingDate: date},
+          fromMatchingDateCandidates: {$push: [label()]}
+        }
+      }
     );
+
+    this.setState(newState);
+  }
+  getStateValue(){
+    return this.state.selectedInputs.fromMatchingDateCandidates;
+  }
+
+  deleteLabel(value){
+    console.log(this.getStateValue());
+
+
+    var tmp=this.getStateValue();
+    var candidateIdx=_.findIndex(tmp, (candidate)=>{
+      console.log('ㅓ떻게 생겼니 ');
+      console.log(candidate.props.value);
+      console.log(value);
+      console.log(candidate.props.value == value);
+
+      return candidate.props.value == value;
+    });
+
+    if(candidateIdx == -1){
+      console.warn('Value : ' + value + 'is not founded on this.state.selectedInputs.fromMatchingDateCandidates');
+      return ;
+    }
+
+    console.log(this.getStateValue());
+    console.log('Find value ' + value + 'on index: ' + candidateIdx);
+
+    var newTmp=tmp.splice(candidateIdx, 1);
+    console.log(tmp);
+
+    let newState=update(this.state, {
+      selectedInputs:{$merge: {fromMatchingDateCandidates: tmp}}
+    });
 
     this.setState(newState);
   }
@@ -189,7 +247,7 @@ class Register extends Component {
               </Grid.Column>
               <Grid.Column width={4}>
                 <Dropdown options={this.state.options.city} scrolling={true}  selection placeholder='시' onChange={this.onCityChange.bind(this)}/>
-                <Dropdown options={this.state.options.times} selection placeholder='Hours' onChange={this.onGuChange.bind(this)}/>
+                <Dropdown options={this.state.options.selectedGu} selection placeholder='구' onChange={this.onGuChange.bind(this)}/>
               </Grid.Column>
             </Grid.Row>
 
@@ -198,43 +256,14 @@ class Register extends Component {
                 경기날짜
               </Grid.Column>
               <Grid.Column width={2}>
+                <DatePicker onDateChange={this.onFromDateChange.bind(this)}/>
 
-                <SingleDatePicker
-                  date={this.state.selectedInputs.fromMatchingDate}
-                  onDateChange={this.onFromDateChange.bind(this)}
-                  focused={this.state.fromFocused}
-                  onFocusChange={({ focused }) => {
+                <List items={this.state.selectedInputs.fromMatchingDateCandidates}/>
 
-                    const isFocused={focused};
-                      this.setState({
-                        fromFocused: isFocused.focused
-                      });
-                    }
-                  }
-                  showClearDate
-                  small
-                  displayFormat='YYYY-MM-DD'
-                  readOnly={this.state.fromReadOnly}
-                />
               </Grid.Column>
 
               <Grid.Column width={2}>
-                <SingleDatePicker
-                  date={this.state.selectedInputs.toMatchingDate}
-                  onDateChange={this.onToDateChange.bind(this)}
-                  focused={this.state.toFocused}
-                  onFocusChange={({ focused }) => {
-                    const isFocused={focused};
-                      this.setState({
-                        toFocused: isFocused.focused
-                      });
-                    }
-                  }
-                  showClearDate
-                  small
-                  displayFormat='YYYY-MM-DD'
-                  readOnly={this.state.toReadOnly}
-                />
+                <DatePicker onDateChange={this.onToDateChange.bind(this)}/>
               </Grid.Column>
             </Grid.Row>
 
@@ -251,7 +280,6 @@ class Register extends Component {
           <hr />
 
           <Button onClick={this.registerMatchRequest.bind(this)}>매치 요청</Button>
-          <DatePicker onTimeChange={this.onTimeChange.bind(this)}/>
       </div>
     )
   }
