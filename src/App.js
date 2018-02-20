@@ -12,10 +12,9 @@ class App extends Component{
 
   render(props){
     /*
-
      router를 header와 같은 depth에 넣으면, withRouter가 올바르게 작동할 것이고, 그에 따라 active 활성화가 가능 할 듯
     */
-    
+
     return(
       <div>
           <Switch>

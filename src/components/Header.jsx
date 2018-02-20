@@ -135,8 +135,10 @@ class Header extends Component{
   }// end method
 
   shouldComponentUpdate(nextProps, nextState){
+    /*
     console.log(this.state.isLoggedIn);
     console.log(nextState.isLoggedIn);
+    */
     return (this.state.isLoggedIn != nextState.isLoggedIn);
   }
 

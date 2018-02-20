@@ -37,23 +37,58 @@ class DatePicker extends Component {
       times.push(timeObject);
     }
 
-    /*
-    var items=[
-      <DateLabel value='asdf' onDeleteClick={()=>{console.log('on delete!!');}} />,
-      <DateLabel value='asdf' onDeleteClick={()=>{console.log('on delete!!');}} />
-    ];
-    */
+    var confirm=false;
+    var disabled=false;
+    var defaultValue=new Moment();
+
+    confirm = this.props.confirm === undefined? false : this.props.confirm;
+    disabled = this.props.disabled === undefined? false : this.props.disabled;
+    defaultValue = this.props.defaultValue === undefined? new Moment() : this.props.defaultValue;
+
+    console.log('confirm! ' + confirm);
+
+    console.log('disabled:: ' + this.props.disabled);
 
     this.state={
       readOnly: true,
       focused: false,
-      selectedDate: new Moment(),
-      times: times
+      selectedDate: defaultValue,
+      times: times,
+      confirm: confirm,
+      options:{
+        open: false,
+        onCancel: () => {
+          let newState=update(this.state, {
+            options: {$merge: {open: false}}
+          });
+          this.setState(newState);
+        },
+        onConfirm: () => {
+          let newState=update(this.state, {
+            options: {$merge: {open: false}}
+          });
+          this.setState(newState);
+        }
+      },
+      isTimeSelected: false,
+      disabled: disabled,
+      defaultValue: defaultValue
     };
   }
 
   onDateChange(date) {
     console.log('onDateChanged()');
+
+    if(this.state.isTimeSelected == true) {
+      var currentDate=this.state.selectedDate;
+      var currentHour=this.state.selectedDate.hour();
+      var currentMinute=this.state.selectedDate.minute();
+
+      date.hour(currentHour);
+      date.minute(currentMinute);
+      this.props.onDateChange(date);
+    }
+
     let newState=update(this.state, {
       $merge: {selectedDate: date}
     });
@@ -62,8 +97,18 @@ class DatePicker extends Component {
   }
 
   onTimeChange(event, data) {
-    console.log('onTimeChange()');
-    console.log(data);
+    /*
+    console.log('on time change: '+ this.state.confirm);
+
+    if(this.state.confirm == true){
+      let newState=update(this.state, {
+        options: {$merge: {open: true}}
+      });
+
+      this.setState(newState);
+      console.log('open!!!!!!!!!!!!!!!!!!');
+    }
+    */
 
     var currentDate=this.state.selectedDate;
     var selectedH='';
@@ -73,17 +118,19 @@ class DatePicker extends Component {
     selectedM=data.value.split(':')[1];
 
     console.log('current hour : ' + currentDate.hours());
-    currentDate.hours(selectedH);
+    currentDate.hour(selectedH);
     currentDate.minute(selectedM);
 
     console.log('new current hour : ' + currentDate.hours());
 
     let newState=update(this.state, {
-      $merge: {selectedDate: currentDate}
+      $merge: {
+        selectedDate: currentDate,
+        isTimeSelected: true
+      }
     });
 
     this.setState(newState);
-
     this.props.onDateChange(currentDate);
   }
 
@@ -95,11 +142,15 @@ class DatePicker extends Component {
           onDateChange={this.onDateChange.bind(this)}
           focused={this.state.focused}
           onFocusChange={({ focused }) => {
-              const isFocused={focused};
 
-              this.setState({
-                focused: isFocused.focused
-              });
+              if(this.state.disabled == true){
+                const isFocused={focused};
+
+                this.setState({
+                  focused: isFocused.focused
+                });
+              }
+
             }
           }
           showClearDate
@@ -109,6 +160,11 @@ class DatePicker extends Component {
         />
 
         <Dropdown options={this.state.times} selection placeholder='Hours' onChange={this.onTimeChange.bind(this)}/>
+        <Confirm
+          open={this.state.options.open}
+          onCancel={this.state.options.onCancel.bind(this)}
+          onConfirm={this.state.options.onConfirm.bind(this)}
+        />
       </div>
     );
   }

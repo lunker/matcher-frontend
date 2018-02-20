@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import { Button, Confirm, Modal, Input, Dropdown, Grid, List} from 'semantic-ui-react'
+import { Button, Confirm, Modal, Input, Dropdown, Grid, List, Icon} from 'semantic-ui-react'
 import axios from 'axios';
 import { Route } from 'react-router-dom';
 import _ from 'lodash';
@@ -39,10 +39,9 @@ class Register extends Component {
         city: '',
         gu: '',
         areaCandidates: [],
-        fromMatchingDate: new Moment(),
-        toMatchingDate: new Moment(),
-        fromMatchingDateCandidates: [],
-        toMatchingDateCandidates: [],
+        fromMatchingDate: new Moment().hour(0).minute(0),
+        toMatchingDate: new Moment().hour(0).minute(0),
+        matchingDateCandidates: [],
         exerciseId: -1
       },
       fromFocused: false,
@@ -54,10 +53,26 @@ class Register extends Component {
     var self=this;
 
     console.log(this.state.selectedInputs);
-    var params={
-      city: this.state.selectedInputs.city,
-      gu: this.state.selectedInputs.gu
-    };
+
+    var params=this.state.selectedInputs;
+    var tmpTimezone=params.matchingDateCandidates;
+    var candidate;
+    var timezoneArr=[];
+
+
+    for(var idx=0; idx<tmpTimezone.length; idx++){
+      candidate=tmpTimezone[idx];
+      candidate=candidate.props.value;
+
+      candidate=candidate.split('~');
+
+      timezoneArr.push({
+        fromMatchingDate: candidate[0],
+        toMatchingDate: candidate[1]
+      });
+    }
+
+    params.matchingDateCandidates=timezoneArr;
 
     axios({
       method:'post',
@@ -65,7 +80,7 @@ class Register extends Component {
       headers: {
         'Access-Control-Allow-Origin': '*'
       },
-      data: this.state.selectedInputs
+      data: params
     })
     .then((response) => {
       console.log(response);
@@ -139,79 +154,97 @@ class Register extends Component {
     this.setState(newState);
   }
 
+  labelWrapper= (from, to) => {
+    const value=from + ' ~ ' + to;
+
+    return (
+      <DateLabel value={value} index={this.state.selectedInputs.matchingDateCandidates.length} onDeleteClick={this.deleteLabel.bind(this)}
+      />
+    );
+  }
+
   onFromDateChange (date) {
-
-    /*
-    let label=()=>{
-      return <DateLabel value={date.toString()} onDeleteClick={()=>{
-        let newState={};
-      }} /> ;
-    }
-    */
-
-    let label=() => {
-      return(
-        <DateLabel value={date.format('YYYY-MM-DD HH:mm').toString()} index={this.state.selectedInputs.fromMatchingDateCandidates.length} onDeleteClick={this.deleteLabel.bind(this)}
-        />
-      );
-    };
-
     let newState=update(this.state,
       {
         selectedInputs: {
-          $merge: {fromMatchingDate: date},
-          fromMatchingDateCandidates: {$push: [label()]}
+          $merge: {fromMatchingDate: date}
         }
       }
     );
 
     this.setState(newState);
   }
-  getStateValue(){
-    return this.state.selectedInputs.fromMatchingDateCandidates;
-  }
 
   deleteLabel(value){
-    console.log(this.getStateValue());
-
-
-    var tmp=this.getStateValue();
+    var tmp=this.state.selectedInputs.matchingDateCandidates;
     var candidateIdx=_.findIndex(tmp, (candidate)=>{
-      console.log('ㅓ떻게 생겼니 ');
-      console.log(candidate.props.value);
-      console.log(value);
-      console.log(candidate.props.value == value);
-
       return candidate.props.value == value;
     });
 
     if(candidateIdx == -1){
-      console.warn('Value : ' + value + 'is not founded on this.state.selectedInputs.fromMatchingDateCandidates');
+      console.warn('Value : ' + value + 'is not founded on this.state.selectedInputs.matchingDateCandidates');
       return ;
     }
-
-    console.log(this.getStateValue());
-    console.log('Find value ' + value + 'on index: ' + candidateIdx);
-
     var newTmp=tmp.splice(candidateIdx, 1);
-    console.log(tmp);
 
     let newState=update(this.state, {
-      selectedInputs:{$merge: {fromMatchingDateCandidates: tmp}}
+      selectedInputs:{$merge: {matchingDateCandidates: tmp}}
     });
 
     this.setState(newState);
   }
 
   onToDateChange (date) {
-    let newState=update(this.state, {
-      selectedInputs: {$merge: {toMatchingDate: date}}}
+    let newState={};
+    newState=update(this.state, {
+        selectedInputs: {
+          $merge: {toMatchingDate: date}
+        }
+      }
     );
 
     this.setState(newState);
   }
 
-  // React Lifecycle
+  addTimezone() {
+    var from=this.state.selectedInputs.fromMatchingDate;
+    var to=this.state.selectedInputs.toMatchingDate;
+    var self=this;
+
+    if(this.isValidTimezone(from, to)){
+      from=from.format('YYYY-MM-DD HH:mm').toString();
+      to=to.format('YYYY-MM-DD HH:mm').toString();
+
+      // create label
+      let newState=update(this.state, {
+          selectedInputs: {
+            matchingDateCandidates: {$push: [self.labelWrapper(from, to)]}
+          }
+        }
+      );
+
+      this.setState(newState);
+    }
+    else{
+      alert('올바른 시간대를 선택하세요');
+      return ;
+    }
+  }
+
+  isValidTimezone(from, to){
+    console.log(from);
+    console.log(to);
+    return from.isBefore(to);
+  }
+
+  handleIconOverrides = predefinedProps => ({
+    onClick: (e) => {
+      _.invoke(predefinedProps, 'onClick', e, predefinedProps)
+      this.addTimezone();
+    },
+  })
+
+  //--- React Lifecycle
   componentDidMount() {
     axios({
       method:'GET',
@@ -256,15 +289,19 @@ class Register extends Component {
                 경기날짜
               </Grid.Column>
               <Grid.Column width={2}>
-                <DatePicker onDateChange={this.onFromDateChange.bind(this)}/>
-
-                <List items={this.state.selectedInputs.fromMatchingDateCandidates}/>
-
+                <DatePicker onDateChange={this.onFromDateChange.bind(this)} disabled/>
               </Grid.Column>
 
               <Grid.Column width={2}>
-                <DatePicker onDateChange={this.onToDateChange.bind(this)}/>
+                <DatePicker onDateChange={this.onToDateChange.bind(this)} confirm={true} disabled/>
+                  {Icon.create({name:'plus'}, {
+                    overrideProps: this.handleIconOverrides,
+                  })}
               </Grid.Column>
+            </Grid.Row>
+
+            <Grid.Row>
+              <List items={this.state.selectedInputs.matchingDateCandidates}/>
             </Grid.Row>
 
             <Grid.Row >
@@ -278,7 +315,6 @@ class Register extends Component {
 
           </Grid>
           <hr />
-
           <Button onClick={this.registerMatchRequest.bind(this)}>매치 요청</Button>
       </div>
     )
