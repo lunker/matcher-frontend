@@ -14,6 +14,7 @@ import omit from 'lodash/omit';
 import update from 'immutability-helper';
 
 import DateLabel from './DateLabel';
+import _ from 'lodash';
 
 
 class DatePicker extends Component {
@@ -35,7 +36,7 @@ class DatePicker extends Component {
         value: strHour
       };
       times.push(timeObject);
-    }
+    };
 
     var confirm=false;
     var disabled=false;
@@ -70,15 +71,13 @@ class DatePicker extends Component {
           this.setState(newState);
         }
       },
-      isTimeSelected: false,
+      isTimeSelected: true,
       disabled: disabled,
       defaultValue: defaultValue
     };
   }
 
   onDateChange(date) {
-    console.log('onDateChanged()');
-
     if(this.state.isTimeSelected == true) {
       var currentDate=this.state.selectedDate;
       var currentHour=this.state.selectedDate.hour();
@@ -87,6 +86,7 @@ class DatePicker extends Component {
       date.hour(currentHour);
       date.minute(currentMinute);
       this.props.onDateChange(date);
+      console.log('whwwwwhwhwhwhwh');
     }
 
     let newState=update(this.state, {
@@ -97,19 +97,6 @@ class DatePicker extends Component {
   }
 
   onTimeChange(event, data) {
-    /*
-    console.log('on time change: '+ this.state.confirm);
-
-    if(this.state.confirm == true){
-      let newState=update(this.state, {
-        options: {$merge: {open: true}}
-      });
-
-      this.setState(newState);
-      console.log('open!!!!!!!!!!!!!!!!!!');
-    }
-    */
-
     var currentDate=this.state.selectedDate;
     var selectedH='';
     var selectedM='';
@@ -131,7 +118,7 @@ class DatePicker extends Component {
     });
 
     this.setState(newState);
-    this.props.onDateChange(currentDate);
+    this.props.onDateChange(_.cloneDeep(currentDate)); // ㅇ여기에서 문제가 일어난다
   }
 
   render(){

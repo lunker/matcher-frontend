@@ -1,12 +1,14 @@
 import React, {Component} from 'react';
 import {Form, Segment, Button, Grid} from 'semantic-ui-react';
 import axios from 'axios';
+import FBLoginButton from '../components/FBLoginButton';
 
 
 class Home extends Component {
 
   constructor(props){
     super(props);
+    console.log(sessionStorage.getItem('matcher_token'));
   }
 
   requestPushToken () {
@@ -28,6 +30,23 @@ class Home extends Component {
       console.log('No valid token');
     }
   }// end method
+
+
+  sendToMe(){
+    let token='';
+    token = sessionStorage.getItem('matcher_token');
+
+    axios({
+      method:'get',
+      url: 'http://localhost:8080/api/match/send?token=' + token
+    })
+    .then((response)=>{
+      console.log(response);
+    })
+    .catch((error)=>{
+      console.error(error);
+    });
+  }
 
   render(){
     return (
@@ -60,6 +79,9 @@ class Home extends Component {
           </Grid>
 
           <Button onClick={this.requestPushToken.bind(this)}>request push token</Button>
+          <Button onClick={this.sendToMe.bind(this)}>나에게 보내기 테스트</Button>
+
+        <FBLoginButton />
         </div>
     );// end return
   }

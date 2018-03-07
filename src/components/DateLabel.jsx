@@ -24,7 +24,7 @@ class DataLabel extends Component {
     return(
       <div>
         <Label as='a'>
-          {this.props.value}
+          {this.props.from.format('YYYY-MM-DD HH:mm').toString()} ~ {this.props.to.format('YYYY-MM-DD HH:mm').toString()}
           {Icon.create({name:'delete'}, {
             overrideProps: this.handleIconOverrides,
           })}

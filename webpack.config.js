@@ -21,7 +21,8 @@ module.exports = {
         historyApiFallback: true,
         inline: true,
         port: 10000,
-        contentBase: __dirname + '/public/'
+        contentBase: __dirname + '/public/',
+				disableHostCheck: true
     },
 
     plugins: [

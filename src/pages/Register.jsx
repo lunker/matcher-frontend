@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import { Button, Confirm, Modal, Input, Dropdown, Grid, List, Icon} from 'semantic-ui-react'
+import { Button, Confirm, Modal, Input, Dropdown, Grid, List, Icon, Form} from 'semantic-ui-react'
 import axios from 'axios';
 import { Route } from 'react-router-dom';
 import _ from 'lodash';
@@ -52,27 +52,23 @@ class Register extends Component {
   registerMatchRequest () {
     var self=this;
 
-    console.log(this.state.selectedInputs);
-
     var params=this.state.selectedInputs;
     var tmpTimezone=params.matchingDateCandidates;
     var candidate;
     var timezoneArr=[];
 
-
     for(var idx=0; idx<tmpTimezone.length; idx++){
       candidate=tmpTimezone[idx];
-      candidate=candidate.props.value;
-
-      candidate=candidate.split('~');
 
       timezoneArr.push({
-        fromMatchingDate: candidate[0],
-        toMatchingDate: candidate[1]
+        fromMatchingDate: candidate.props.from,
+        toMatchingDate: candidate.props.to
       });
-    }
+    } 
 
     params.matchingDateCandidates=timezoneArr;
+    console.log('Register match request params::');
+    console.log(params);
 
     axios({
       method:'post',
@@ -146,19 +142,25 @@ class Register extends Component {
       }
     }
 
-    console.log('Selected exercise id :: ' + exerciseId);
-
     let newState=update(this.state, {
       selectedInputs: {$merge: {exerciseId: exerciseId}}
     });
     this.setState(newState);
   }
 
-  labelWrapper= (from, to) => {
-    const value=from + ' ~ ' + to;
+  labelWrapper (from, to) {
+    // const value=from + ' ~ ' + to;
+    console.log('Create date label');
+    console.log(from);
+    console.log(to);
 
     return (
-      <DateLabel value={value} index={this.state.selectedInputs.matchingDateCandidates.length} onDeleteClick={this.deleteLabel.bind(this)}
+      <DateLabel
+        key={from}
+        from={from}
+        to={to}
+        index={this.state.selectedInputs.matchingDateCandidates.length}
+        onDeleteClick={this.deleteLabel.bind(this)}
       />
     );
   }
@@ -207,14 +209,13 @@ class Register extends Component {
   }
 
   addTimezone() {
-    var from=this.state.selectedInputs.fromMatchingDate;
+    var from=this.state.selectedInputs.fromMatchingDate.get();
+    console.log('from!');
+    console.log(from);
     var to=this.state.selectedInputs.toMatchingDate;
     var self=this;
 
     if(this.isValidTimezone(from, to)){
-      from=from.format('YYYY-MM-DD HH:mm').toString();
-      to=to.format('YYYY-MM-DD HH:mm').toString();
-
       // create label
       let newState=update(this.state, {
           selectedInputs: {
@@ -269,30 +270,30 @@ class Register extends Component {
     return (
       <div>
           <Grid
-            divided
             textAlign='center'
             style={{ height: '100%' }}
             verticalAlign='middle'>
 
-            <Grid.Row columns={6}>
-              <Grid.Column width={2}>
-                지역
-              </Grid.Column>
-              <Grid.Column width={4}>
-                <Dropdown options={this.state.options.city} scrolling={true}  selection placeholder='시' onChange={this.onCityChange.bind(this)}/>
-                <Dropdown options={this.state.options.selectedGu} selection placeholder='구' onChange={this.onGuChange.bind(this)}/>
-              </Grid.Column>
+            <Grid.Row>
+
+                <Grid.Column width={2}>
+                  <label>지역</label>
+                </Grid.Column>
+
+                <Grid.Column width={6}>
+                  <Dropdown options={this.state.options.city} scrolling={true}  selection placeholder='시' onChange={this.onCityChange.bind(this)}/>
+                  <Dropdown options={this.state.options.selectedGu} selection placeholder='구' onChange={this.onGuChange.bind(this)}/>
+                </Grid.Column>
+
             </Grid.Row>
 
             <Grid.Row>
               <Grid.Column width={2}>
                 경기날짜
               </Grid.Column>
-              <Grid.Column width={2}>
+              <Grid.Column width={6}>
                 <DatePicker onDateChange={this.onFromDateChange.bind(this)} disabled/>
-              </Grid.Column>
 
-              <Grid.Column width={2}>
                 <DatePicker onDateChange={this.onToDateChange.bind(this)} confirm={true} disabled/>
                   {Icon.create({name:'plus'}, {
                     overrideProps: this.handleIconOverrides,
@@ -308,8 +309,8 @@ class Register extends Component {
               <Grid.Column width={2}>
                 exercise
               </Grid.Column>
-              <Grid.Column width={4}>
-                <Dropdown options={this.state.options.exercise} fluid selection placeholder='Select Type' onChange={this.onExerciseChange.bind(this)}/>
+              <Grid.Column width={6}>
+                <Dropdown options={this.state.options.exercise}  selection placeholder='Select Type' onChange={this.onExerciseChange.bind(this)}/>
               </Grid.Column>
             </Grid.Row>
 
