@@ -32,7 +32,8 @@ class Register extends Component {
         exercise: [],
         city: [],
         gu: [],
-        selectedGu: []
+        selectedGu: [],
+        availableAttendeeNum:[]
       },
 
       selectedInputs: {
@@ -42,7 +43,8 @@ class Register extends Component {
         fromMatchingDate: new Moment().hour(0).minute(0),
         toMatchingDate: new Moment().hour(0).minute(0),
         matchingDateCandidates: [],
-        exerciseId: -1
+        exerciseId: -1,
+        attendeeNum: 0
       },
       fromFocused: false,
       toFocused: false,
@@ -61,10 +63,10 @@ class Register extends Component {
       candidate=tmpTimezone[idx];
 
       timezoneArr.push({
-        fromMatchingDate: candidate.props.from,
-        toMatchingDate: candidate.props.to
+        fromMatchingDate: candidate.props.from.format('YYYY-MM-DD'),
+        fromMatchingHour: candidate.props.from.hour()
       });
-    } 
+    }
 
     params.matchingDateCandidates=timezoneArr;
     console.log('Register match request params::');
@@ -131,19 +133,31 @@ class Register extends Component {
   }
 
   onExerciseChange (event, data) {
-    console.log(data);
     console.log(data.options);
     var exerciseId=0;
+    var attendeeCandidates=[];
 
     for(var idx in data.options){
       if(data.options[idx].text === data.value){
         exerciseId=data.options[idx].id;
+        var maxAttendee=data.options[idx].maxParticipant;
+
+        // generate attendee options
+        for(var idx=1; idx<maxAttendee; idx++){
+          attendeeCandidates.push({
+            "key": "max_attendee" + idx,
+            "value":idx,
+            "text": idx
+          });
+        }
         break;
       }
     }
+    console.log(attendeeCandidates);
 
     let newState=update(this.state, {
-      selectedInputs: {$merge: {exerciseId: exerciseId}}
+      selectedInputs: {$merge: {exerciseId: exerciseId}},
+      options: {$merge: {availableAttendeeNum: attendeeCandidates}}
     });
     this.setState(newState);
   }
@@ -245,6 +259,20 @@ class Register extends Component {
     },
   })
 
+  onAttendeeNumChange(event, data){
+    console.log("Set attendeeNum as : " + data.value);
+    let newState=update(
+      this.state,
+      {
+        selectedInputs:{
+          $merge: {attendeeNum: data.value}
+        }
+      }
+    );
+
+    this.setState(newState);
+  }
+
   //--- React Lifecycle
   componentDidMount() {
     axios({
@@ -311,6 +339,16 @@ class Register extends Component {
               </Grid.Column>
               <Grid.Column width={6}>
                 <Dropdown options={this.state.options.exercise}  selection placeholder='Select Type' onChange={this.onExerciseChange.bind(this)}/>
+              </Grid.Column>
+            </Grid.Row>
+
+
+            <Grid.Row >
+              <Grid.Column width={2}>
+                참가인원
+              </Grid.Column>
+              <Grid.Column width={6}>
+                <Dropdown options={this.state.options.availableAttendeeNum}  selection placeholder='참가인원' onChange={this.onAttendeeNumChange.bind(this)}/>
               </Grid.Column>
             </Grid.Row>
 
